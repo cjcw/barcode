@@ -22,7 +22,7 @@ import emd
 import os
 import numpy as np
 X # channel signal
-sample_rate # sample rate of X
+sample_rate # sample rate of X in Hz
 
 # STEP 1
 imf = emd.sift.sift(X) 
@@ -55,7 +55,7 @@ region_imfis : dict
 emdStr : string
     String to identify the variant of emd that was used to extract the imfs. e.g. '.eEMD'
 sample_rate : int
-    The sampling rate of the data
+    The sampling rate of the data in Hz
 save : bool
     Should the outputs be saved to barcodeDir
 barcodeDir : string | None

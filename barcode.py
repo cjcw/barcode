@@ -220,7 +220,17 @@ def regImfs_1d_to_2d(obVecs_1d, mask_within=True):
     
     return obVecs_2d, pairwiseInds
 
-    
+def vec2barcode(intVec, pairwiseInds):
+    barcodeOut = np.zeros([np.max(pairwiseInds)+1]*2)
+    for dimInd, regs in enumerate(pairwiseInds):
+        x = regs[0]
+        y = regs[1]
+        barcodeOut[x, y] = intVec[dimInd]
+        barcodeOut[y, x] = intVec[dimInd]
+    return barcodeOut
+
+def barcode2vec(barcode, pairwiseInds):
+    return np.array([barcode[x,y] for x, y in pairwiseInds])
 
 def runICA(dims, nICs, max_iter=500):
     """
@@ -357,7 +367,7 @@ def detect_barcodes(regions, region_paths2IAs, region_imfis, emdStr, sample_rate
     emdStr : string
         String to identify the variant of emd that was used to extract the imfs. e.g. '.eEMD'
     sample_rate : int
-        The sampling rate of the data
+        The sampling rate of the data in Hz
     save : bool
         Should the outputs be saved to barcodeDir
     barcodeDir : string | None
@@ -391,12 +401,18 @@ def detect_barcodes(regions, region_paths2IAs, region_imfis, emdStr, sample_rate
     sesh_lens : list
         Each session entry is a integer specifying the length of the session amplitude file
     """
+    
     # check and format inputs
     region_paths2IAs = fix_region_paths2IAs(region_paths2IAs)
 
     # check same paths to IAs are the same for each region
     sesh_lens, sesh_strs, nSessions = check_region_paths2IAs(regions, region_paths2IAs, emdStr)
     
+    if save and barcodeDir is None:
+        print('Warning: detected barcodes will not be saved as barcodeDir has not been specified')
+        save = False
+    elif not save:
+        print('detected barcodes will not be saved. In order to save, set save=True and specify barcodeDir')
     
     downsample_interval = int(sample_rate*(downsample_interval_ms / 1000))
     if sesh_excludeWindows is None:
@@ -446,15 +462,12 @@ def detect_barcodes(regions, region_paths2IAs, region_imfis, emdStr, sample_rate
     ics = np.row_stack([flipSign(ic) for ic in ics])
     barcodes = np.array([vec2barcode(ic, pairwiseInds) for ic in ics])
     
-    if save_barcodes:
-        if barcodeDir is None:
-            print('Barcodes will not be saved as barcodeDir has not been specified')
-        else:
-            save_barcodes(regions, region_imfis, emdStr, ics, barcodes, dimInfo, pairwiseInds, sesh_strs, sesh_lens, barcodeDir)
+    if save:
+        save_barcodes(regions, region_imfis, emdStr, ics, barcodes, dimInfo, pairwiseInds, sesh_strs, sesh_lens, barcodeDir)
         
     return ics, barcodes, dimInfo, pairwiseInds, sesh_strs, sesh_lens
 
-# fix - sort memory error
+
 def get_barcodeStrengths(seshi, sesh_strs, sesh_lens, ics, regions, region_imfis, region_paths2IAs, dimInfo, pairwiseInds,
                          emdStr, barcodeDir, chunk=(False, 10000)):
     """
