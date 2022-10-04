@@ -85,6 +85,7 @@ bcode.plot_barcode(barcode, regions, region_imfis, region_colors)
              
 '''
 # load and unpack detected barcode information
+import pickle as pk
 saveStr = bcode.get_regionImf_saveStr(regions, region_imfis, emdStr)
 with open(barcodeDir+'detectedBarcodes_info'+saveStr+'.pkl', 'rb') as h:
     detectedBarcodes_info = pk.load(h)
